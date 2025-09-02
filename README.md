@@ -4,14 +4,10 @@
 The **Office Asset Tracker** is a web-based system designed to help organizations manage office assets effectively.  
 It supports two roles: **Admin** and **Staff**, each with specific permissions.
 
----
-
 ## ⚙️ System Requirements
 - **Server**: XAMPP / WAMP / LAMP (PHP 7.4+)  
 - **Database**: MySQL 5.7+  
 - **Browser**: Chrome / Edge / Firefox  
-
----
 
 ## 🚀 Installation & Setup
 1. Copy the project folder (`office_asset_tracker`) into your server’s **htdocs** (XAMPP) or **www** directory.  
