@@ -1,0 +1,13 @@
+# Render Blueprint — deploys the PHP app as a Docker web service.
+# The database is Neon (PostgreSQL); set DATABASE_URL to the Neon connection
+# string in the Render dashboard (it is marked sync:false so it is not stored
+# in git). Render injects $PORT, which the Docker entrypoint binds Apache to.
+services:
+  - type: web
+    name: office-asset-tracker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
