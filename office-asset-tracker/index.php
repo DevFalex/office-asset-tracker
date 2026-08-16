@@ -20,7 +20,7 @@ include "db.php";
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="index.php">Office Asset Tracker - 249074041 </a>
+    <a class="navbar-brand fw-bold" href="index.php">Office Asset Tracker</a>
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><span class="nav-link text-white">Welcome, <?php echo $_SESSION['full_name']; ?> (<?php echo $_SESSION['role']; ?>)</span></li>
@@ -101,5 +101,6 @@ include "db.php";
     </div>
 </div>
 
+<footer class="text-center text-muted py-3 mt-4"><small>Built by DevFalex.</small></footer>
 </body>
 </html>
