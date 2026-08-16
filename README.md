@@ -9,7 +9,30 @@ It supports two roles: **Admin** and **Staff**, each with specific permissions.
 - **Database**: MySQL 5.7+  
 - **Browser**: Chrome / Edge / Firefox  
 
-## 🚀 Installation & Setup
+## ☁️ Deploy Online (Railway)
+The app is container-ready and reads its database settings from environment variables, so it can be hosted on [Railway](https://railway.app) with a managed MySQL — no code changes needed.
+
+**Steps:**
+1. Push this repository to GitHub (already done for this project).
+2. In Railway: **New Project → Deploy from GitHub repo** and pick this repo. Railway detects the `Dockerfile` and builds the PHP app.
+3. In the same project: **New → Database → Add MySQL**. Railway provisions a managed MySQL instance.
+4. Open the **app service → Variables** and add a reference to the database. The simplest option is a single variable:
+   - `MYSQL_URL` = `${{MySQL.MYSQL_URL}}`
+
+   (Alternatively add the discrete vars `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, each referencing `${{MySQL.<same name>}}`.)
+5. On the app service, open **Settings → Networking → Generate Domain** to get a public URL.
+6. Visit the URL. On first load the app auto-creates its tables and sample data (from `office-asset-tracker/schema.sql`), then shows the login page.
+
+The database connection is defined in `office-asset-tracker/db.php`, which resolves config from `MYSQL_URL`/`DATABASE_URL`, then Railway's `MYSQL*` / generic `DB_*` variables, and finally falls back to local `localhost`/`root` defaults for XAMPP.
+
+### Run the full stack locally with Docker
+```bash
+docker compose up --build
+# then open http://localhost:8080
+```
+This starts the PHP app and a MySQL container together; the schema and sample data load automatically on first run.
+
+## 🚀 Installation & Setup (Local XAMPP/LAMP)
 1. Copy the project folder (`office_asset_tracker`) into your server’s **htdocs** (XAMPP) or **www** directory.  
 2. Import the SQL script: `office_asset_tracker.sql` into **phpMyAdmin**.  
    - This will create required tables and insert sample data (Admin, Staff, Assets).  

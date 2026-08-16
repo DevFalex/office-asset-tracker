@@ -1,0 +1,33 @@
+# Run the full stack (PHP app + MySQL) locally or on any Docker host:
+#   docker compose up --build
+# then open http://localhost:8080
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      MYSQLHOST: db
+      MYSQLPORT: "3306"
+      MYSQLUSER: root
+      MYSQLPASSWORD: rootpass
+      MYSQLDATABASE: office_asset_tracker
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: office_asset_tracker
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  db_data:
