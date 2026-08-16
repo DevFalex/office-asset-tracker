@@ -6,24 +6,20 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){
 }
 include "db.php";
 
-$id = $_GET['id'];
-$result = $conn->query("SELECT * FROM users WHERE user_id=$id AND role='Staff'");
-$staff = $result->fetch_assoc();
+$id = $_GET['id'] ?? null;
 
 if(isset($_POST['update_staff'])){
-    $full_name = $_POST['full_name'];
-    $username = $_POST['username'];
-    $department = $_POST['department'];
-
-    $sql = "UPDATE users SET 
-                full_name='$full_name',
-                username='$username',
-                department='$department'
-            WHERE user_id=$id AND role='Staff'";
-    $conn->query($sql);
+    $conn->query(
+        "UPDATE users SET full_name = ?, username = ?, department = ? WHERE user_id = ? AND role = 'Staff'",
+        [$_POST['full_name'], $_POST['username'], $_POST['department'], $id]
+    );
     header("Location: /staff.php");
     exit();
 }
+
+$result = $conn->query("SELECT * FROM users WHERE user_id = ? AND role = 'Staff'", [$id]);
+$staff = $result ? $result->fetch_assoc() : null;
+if(!$staff){ header("Location: /staff.php"); exit(); }
 ?>
 
 <!DOCTYPE html>
@@ -37,13 +33,13 @@ if(isset($_POST['update_staff'])){
     <h2>Edit Staff</h2>
     <form method="POST" class="row g-3">
         <div class="col-md-4">
-            <input type="text" name="full_name" value="<?php echo $staff['full_name']; ?>" class="form-control" required>
+            <input type="text" name="full_name" value="<?php echo e($staff['full_name']); ?>" class="form-control" required>
         </div>
         <div class="col-md-4">
-            <input type="text" name="username" value="<?php echo $staff['username']; ?>" class="form-control" required>
+            <input type="text" name="username" value="<?php echo e($staff['username']); ?>" class="form-control" required>
         </div>
         <div class="col-md-4">
-            <input type="text" name="department" value="<?php echo $staff['department']; ?>" class="form-control">
+            <input type="text" name="department" value="<?php echo e($staff['department']); ?>" class="form-control">
         </div>
         <div class="col-md-12">
             <button type="submit" name="update_staff" class="btn btn-success w-100">Update</button>

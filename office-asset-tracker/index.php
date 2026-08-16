@@ -23,7 +23,7 @@ include "db.php";
     <a class="navbar-brand fw-bold" href="index.php">Office Asset Tracker</a>
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><span class="nav-link text-white">Welcome, <?php echo $_SESSION['full_name']; ?> (<?php echo $_SESSION['role']; ?>)</span></li>
+        <li class="nav-item"><span class="nav-link text-white">Welcome, <?php echo e($_SESSION['full_name']); ?> (<?php echo e($_SESSION['role']); ?>)</span></li>
         <li class="nav-item"><a class="nav-link" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
       </ul>
     </div>
@@ -38,7 +38,7 @@ include "db.php";
         $icons = ["bi-check-circle-fill text-success", "bi-people-fill text-primary", "bi-tools text-warning", "bi-trash-fill text-danger"];
         $i=0;
         foreach($statuses as $status){
-            $count = $conn->query("SELECT COUNT(*) as total FROM assets WHERE status='$status'")->fetch_assoc()['total'];
+            $count = $conn->query("SELECT COUNT(*) as total FROM assets WHERE status = ?", [$status])->fetch_assoc()['total'];
             echo "
             <div class='col-md-3'>
                 <div class='card shadow-sm h-100 text-center'>

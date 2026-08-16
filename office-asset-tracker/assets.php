@@ -4,25 +4,21 @@ if(!isset($_SESSION['user_id'])){ header("Location: /login.php"); exit(); }
 include "db.php";
 
 if(isset($_POST['add_asset'])){
-    $name = $_POST['asset_name'];
-    $type = $_POST['asset_type'];
-    $serial = $_POST['serial_number'];
-    $purchase_date = $_POST['purchase_date'];
-    $status = "Available";
-
-    $sql = "INSERT INTO assets (asset_name, asset_type, serial_number, purchase_date, status) 
-            VALUES ('$name','$type','$serial','$purchase_date','$status')";
-    if($conn->query($sql)){
+    $ok = $conn->query(
+        "INSERT INTO assets (asset_name, asset_type, serial_number, purchase_date, status)
+         VALUES (?, ?, ?, ?, 'Available')",
+        [$_POST['asset_name'], $_POST['asset_type'], $_POST['serial_number'], $_POST['purchase_date']]
+    );
+    if($ok){
         echo "<script>alert('Asset added successfully'); window.location='/assets.php';</script>";
     } else {
-        echo "<script>alert('Error: ".$conn->error."');</script>";
+        echo "<script>alert('Error saving asset. Check that the serial number is unique.');</script>";
     }
 }
 
 // Delete Asset
 if(isset($_GET['delete'])){
-    $id = $_GET['delete'];
-    $conn->query("DELETE FROM assets WHERE asset_id=$id");
+    $conn->query("DELETE FROM assets WHERE asset_id = ?", [$_GET['delete']]);
     echo "<script>alert('Asset deleted successfully'); window.location='/assets.php';</script>";
 }
 
@@ -77,10 +73,10 @@ if(isset($_GET['delete'])){
                     while($row = $result->fetch_assoc()){
                         echo "<tr>
                                 <td>{$row['asset_id']}</td>
-                                <td>{$row['asset_name']}</td>
-                                <td>{$row['asset_type']}</td>
-                                <td>{$row['serial_number']}</td>
-                                <td>{$row['purchase_date']}</td>
+                                <td>".e($row['asset_name'])."</td>
+                                <td>".e($row['asset_type'])."</td>
+                                <td>".e($row['serial_number'])."</td>
+                                <td>".e($row['purchase_date'])."</td>
                                 <td><span class='badge bg-".
                                     ($row['status']=="Available" ? "success" : 
                                     ($row['status']=="In Use" ? "primary" : 

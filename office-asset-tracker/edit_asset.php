@@ -6,28 +6,22 @@ if(!isset($_SESSION['user_id'])){
 }
 include "db.php";
 
-$id = $_GET['id'];
-$result = $conn->query("SELECT * FROM assets WHERE asset_id=$id");
-$asset = $result->fetch_assoc();
+$id = $_GET['id'] ?? null;
 
 if(isset($_POST['update_asset'])){
-    $name = $_POST['asset_name'];
-    $type = $_POST['asset_type'];
-    $serial = $_POST['serial_number'];
-    $date = $_POST['purchase_date'];
-    $status = $_POST['status'];
-
-    $sql = "UPDATE assets SET 
-                asset_name='$name',
-                asset_type='$type',
-                serial_number='$serial',
-                purchase_date='$date',
-                status='$status'
-            WHERE asset_id=$id";
-    $conn->query($sql);
+    $conn->query(
+        "UPDATE assets SET asset_name = ?, asset_type = ?, serial_number = ?, purchase_date = ?, status = ?
+         WHERE asset_id = ?",
+        [$_POST['asset_name'], $_POST['asset_type'], $_POST['serial_number'],
+         $_POST['purchase_date'], $_POST['status'], $id]
+    );
     header("Location: /assets.php");
     exit();
 }
+
+$result = $conn->query("SELECT * FROM assets WHERE asset_id = ?", [$id]);
+$asset = $result ? $result->fetch_assoc() : null;
+if(!$asset){ header("Location: /assets.php"); exit(); }
 ?>
 
 <!DOCTYPE html>
@@ -41,16 +35,16 @@ if(isset($_POST['update_asset'])){
     <h2>Edit Asset</h2>
     <form method="POST" class="row g-3">
         <div class="col-md-6">
-            <input type="text" name="asset_name" value="<?php echo $asset['asset_name']; ?>" class="form-control" required>
+            <input type="text" name="asset_name" value="<?php echo e($asset['asset_name']); ?>" class="form-control" required>
         </div>
         <div class="col-md-6">
-            <input type="text" name="asset_type" value="<?php echo $asset['asset_type']; ?>" class="form-control">
+            <input type="text" name="asset_type" value="<?php echo e($asset['asset_type']); ?>" class="form-control">
         </div>
         <div class="col-md-6">
-            <input type="text" name="serial_number" value="<?php echo $asset['serial_number']; ?>" class="form-control">
+            <input type="text" name="serial_number" value="<?php echo e($asset['serial_number']); ?>" class="form-control">
         </div>
         <div class="col-md-6">
-            <input type="date" name="purchase_date" value="<?php echo $asset['purchase_date']; ?>" class="form-control">
+            <input type="date" name="purchase_date" value="<?php echo e($asset['purchase_date']); ?>" class="form-control">
         </div>
         <div class="col-md-6">
             <select name="status" class="form-control">

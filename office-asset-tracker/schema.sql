@@ -44,10 +44,11 @@ INSERT INTO assets (asset_id, asset_name, asset_type, serial_number, purchase_da
 (10, 'Apple MacBook Pro 16',       'Laptop',        'MBP16-2023-77',  '2025-09-01', 'Available')
 ON CONFLICT DO NOTHING;
 
--- Passwords are md5 hashes (matching the original app). admin => mit_admin123
+-- Passwords are bcrypt hashes (password_hash). Demo logins:
+--   admin => admin123   (Admin)   |   Falex => staff123 (Staff)
 INSERT INTO users (user_id, username, password, role, full_name, department) VALUES
-(1, 'admin', '879e5d641efa526af6f1a3b8e9868927', 'Admin', 'System Admin',     'IT'),
-(5, 'Falex', '18228d936ed470784aae78cd39c82c72', 'Staff', 'Opeoluwa Faleye',  'Computer Science')
+(1, 'admin', '$2y$12$TV6qlwGA73qhRt1vXshjGeehwHhsR2icfdaElOeppTvVLI6cxCBki', 'Admin', 'System Admin',    'IT'),
+(5, 'Falex', '$2y$12$RUZ/4vVWcqf/LEBhWMMAquPEIaoFqNC0KWAhkQUpUpEc/oGHq.h92', 'Staff', 'Opeoluwa Faleye', 'Computer Science')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO asset_assignments (assignment_id, asset_id, staff_id, assigned_date, return_date, remarks) VALUES

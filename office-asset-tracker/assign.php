@@ -5,31 +5,28 @@ include "db.php";
 
 if(isset($_POST['assign_asset'])){
     $asset_id = $_POST['asset_id'];
-    $staff_id = $_POST['staff_id'];
-    $assigned_date = $_POST['assigned_date'];
-
-    $sql = "INSERT INTO asset_assignments (asset_id, staff_id, assigned_date) 
-            VALUES ('$asset_id','$staff_id','$assigned_date')";
-    if($conn->query($sql)){
+    $ok = $conn->query(
+        "INSERT INTO asset_assignments (asset_id, staff_id, assigned_date) VALUES (?, ?, ?)",
+        [$asset_id, $_POST['staff_id'], $_POST['assigned_date']]
+    );
+    if($ok){
         // update asset status
-        $conn->query("UPDATE assets SET status='In Use' WHERE asset_id=$asset_id");
+        $conn->query("UPDATE assets SET status='In Use' WHERE asset_id = ?", [$asset_id]);
         echo "<script>alert('Asset assigned successfully'); window.location='/assign.php';</script>";
     } else {
-        echo "<script>alert('Error: ".$conn->error."');</script>";
+        echo "<script>alert('Error assigning asset');</script>";
     }
 }
 
 // Return Asset
 if(isset($_GET['return'])){
     $id = $_GET['return'];
-    $today = date("Y-m-d");
-
-    $sql = "UPDATE asset_assignments SET return_date='$today' WHERE assignment_id=$id";
-    if($conn->query($sql)){
-        // get asset ID and update status back to Available
-        $asset_id = $conn->query("SELECT asset_id FROM asset_assignments WHERE assignment_id=$id")->fetch_assoc()['asset_id'];
-        $conn->query("UPDATE assets SET status='Available' WHERE asset_id=$asset_id");
-
+    if($conn->query("UPDATE asset_assignments SET return_date = ? WHERE assignment_id = ?", [date("Y-m-d"), $id])){
+        // get asset ID and set status back to Available
+        $row = $conn->query("SELECT asset_id FROM asset_assignments WHERE assignment_id = ?", [$id])->fetch_assoc();
+        if($row){
+            $conn->query("UPDATE assets SET status='Available' WHERE asset_id = ?", [$row['asset_id']]);
+        }
         echo "<script>alert('Asset marked as returned'); window.location='/assign.php';</script>";
     }
 }
@@ -61,7 +58,7 @@ if(isset($_GET['return'])){
                         <?php
                         $assets = $conn->query("SELECT * FROM assets WHERE status='Available'");
                         while($a = $assets->fetch_assoc()){
-                            echo "<option value='{$a['asset_id']}'>{$a['asset_name']} ({$a['serial_number']})</option>";
+                            echo "<option value='{$a['asset_id']}'>".e($a['asset_name'])." (".e($a['serial_number']).")</option>";
                         }
                         ?>
                     </select>
@@ -72,7 +69,7 @@ if(isset($_GET['return'])){
                         <?php
                         $staff = $conn->query("SELECT * FROM users WHERE role='Staff'");
                         while($s = $staff->fetch_assoc()){
-                            echo "<option value='{$s['user_id']}'>{$s['full_name']} - {$s['department']}</option>";
+                            echo "<option value='{$s['user_id']}'>".e($s['full_name'])." - ".e($s['department'])."</option>";
                         }
                         ?>
                     </select>
@@ -102,8 +99,8 @@ if(isset($_GET['return'])){
                     while($row = $result->fetch_assoc()){
                         echo "<tr>
                                 <td>{$row['assignment_id']}</td>
-                                <td>{$row['asset_name']} ({$row['serial_number']})</td>
-                                <td>{$row['full_name']} - {$row['department']}</td>
+                                <td>".e($row['asset_name'])." (".e($row['serial_number']).")</td>
+                                <td>".e($row['full_name'])." - ".e($row['department'])."</td>
                                 <td>{$row['assigned_date']}</td>
                                 <td>".($row['return_date'] ? $row['return_date'] : "<span class='badge bg-danger'>Not Returned</span>")."</td>
                                 <td>";

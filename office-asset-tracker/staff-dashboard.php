@@ -25,7 +25,7 @@ $staff_id = $_SESSION['user_id'];
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
             <span class="nav-link text-white">
-                Welcome, <?php echo $_SESSION['full_name']; ?> (Staff)
+                Welcome, <?php echo e($_SESSION['full_name']); ?> (Staff)
             </span>
         </li>
         <li class="nav-item">
@@ -55,16 +55,16 @@ $staff_id = $_SESSION['user_id'];
                 </thead>
                 <tbody>
                     <?php
-                    $sql = "SELECT a.asset_name, a.serial_number, aa.assigned_date, a.status 
+                    $sql = "SELECT a.asset_name, a.serial_number, aa.assigned_date, a.status
                             FROM asset_assignments aa
                             JOIN assets a ON aa.asset_id=a.asset_id
-                            WHERE aa.staff_id=$staff_id AND aa.return_date IS NULL";
-                    $result = $conn->query($sql);
+                            WHERE aa.staff_id = ? AND aa.return_date IS NULL";
+                    $result = $conn->query($sql, [$staff_id]);
                     if($result->num_rows > 0){
                         while($row = $result->fetch_assoc()){
                             echo "<tr>
-                                    <td>{$row['asset_name']}</td>
-                                    <td>{$row['serial_number']}</td>
+                                    <td>".e($row['asset_name'])."</td>
+                                    <td>".e($row['serial_number'])."</td>
                                     <td>{$row['assigned_date']}</td>
                                     <td><span class='badge bg-".
                                         ($row['status']=="Available" ? "success" : 
