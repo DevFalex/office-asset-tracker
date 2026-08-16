@@ -19,6 +19,43 @@ function e($v)
     return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 }
 
+/** Redirect to the login page unless a user is signed in. */
+function require_login()
+{
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: /login.php");
+        exit();
+    }
+}
+
+/** Redirect unless the signed-in user is an Admin. */
+function require_admin()
+{
+    require_login();
+    if (($_SESSION['role'] ?? '') !== 'Admin') {
+        header("Location: /login.php");
+        exit();
+    }
+}
+
+/** Queue a one-time flash message shown on the next page render. */
+function set_flash($type, $msg)
+{
+    $_SESSION['flash'] = ['type' => $type, 'msg' => $msg];
+}
+
+/** Bootstrap badge classes for an asset status value. */
+function status_class($status)
+{
+    switch ($status) {
+        case 'Available':    return 'bg-success';
+        case 'In Use':       return 'bg-primary';
+        case 'Under Repair': return 'bg-warning text-dark';
+        case 'Disposed':     return 'bg-danger';
+        default:             return 'bg-secondary';
+    }
+}
+
 function oat_pg_dsn()
 {
     $url = getenv('DATABASE_URL') ?: getenv('POSTGRES_URL');
