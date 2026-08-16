@@ -29,8 +29,8 @@ include "db.php";
                     <?php
                     $statuses = ["Available","In Use","Under Repair","Disposed"];
                     foreach($statuses as $status){
-                        $count = $conn->query("SELECT COUNT(*) as total FROM assets WHERE status='$status'")->fetch_assoc()['total'];
-                        echo "<tr><td>$status</td><td><span class='badge bg-dark'>$count</span></td></tr>";
+                        $count = $conn->query("SELECT COUNT(*) as total FROM assets WHERE status = ?", [$status])->fetch_assoc()['total'];
+                        echo "<tr><td>".e($status)."</td><td><span class='badge bg-dark'>$count</span></td></tr>";
                     }
                     ?>
                 </tbody>
@@ -53,7 +53,7 @@ include "db.php";
                             GROUP BY u.department";
                     $result = $conn->query($sql);
                     while($row = $result->fetch_assoc()){
-                        echo "<tr><td>{$row['department']}</td><td><span class='badge bg-primary'>{$row['total']}</span></td></tr>";
+                        echo "<tr><td>".e($row['department'])."</td><td><span class='badge bg-primary'>{$row['total']}</span></td></tr>";
                     }
                     ?>
                 </tbody>
@@ -77,8 +77,8 @@ include "db.php";
                     $result = $conn->query($sql);
                     while($row = $result->fetch_assoc()){
                         echo "<tr>
-                                <td>{$row['asset_name']} ({$row['serial_number']})</td>
-                                <td>{$row['full_name']}</td>
+                                <td>".e($row['asset_name'])." (".e($row['serial_number']).")</td>
+                                <td>".e($row['full_name'])."</td>
                                 <td>{$row['assigned_date']}</td>
                                 <td>".($row['return_date'] ? $row['return_date'] : "<span class='badge bg-danger'>Not Returned</span>")."</td>
                               </tr>";

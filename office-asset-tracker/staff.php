@@ -4,23 +4,20 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){ header("Locati
 include "db.php";
 
 if(isset($_POST['add_staff'])){
-    $full_name = $_POST['full_name'];
-    $username = $_POST['username'];
-    $password = md5($_POST['password']); // simple hash to match login
-    $department = $_POST['department'];
-
-    $sql = "INSERT INTO users (full_name, username, password, department, role) 
-            VALUES ('$full_name', '$username', '$password', '$department', 'Staff')";
-    if($conn->query($sql)){
+    $ok = $conn->query(
+        "INSERT INTO users (full_name, username, password, department, role) VALUES (?, ?, ?, ?, 'Staff')",
+        [$_POST['full_name'], $_POST['username'],
+         password_hash($_POST['password'], PASSWORD_DEFAULT), $_POST['department']]
+    );
+    if($ok){
         echo "<script>alert('Staff added successfully'); window.location='/staff.php';</script>";
     } else {
-        echo "<script>alert('Error: ".$conn->error."');</script>";
+        echo "<script>alert('Error adding staff. The username may already exist.');</script>";
     }
 }
 
 if(isset($_GET['delete'])){
-    $id = $_GET['delete'];
-    $conn->query("DELETE FROM users WHERE user_id=$id");
+    $conn->query("DELETE FROM users WHERE user_id = ? AND role = 'Staff'", [$_GET['delete']]);
     echo "<script>alert('Staff deleted successfully'); window.location='/staff.php';</script>";
 }
 ?>
@@ -68,9 +65,9 @@ if(isset($_GET['delete'])){
                     while($row = $result->fetch_assoc()){
                         echo "<tr>
                                 <td>{$row['user_id']}</td>
-                                <td>{$row['full_name']}</td>
-                                <td>{$row['username']}</td>
-                                <td><span class='badge bg-info text-dark'>{$row['department']}</span></td>
+                                <td>".e($row['full_name'])."</td>
+                                <td>".e($row['username'])."</td>
+                                <td><span class='badge bg-info text-dark'>".e($row['department'])."</span></td>
                                 <td>
                                     <a href='edit_staff.php?id={$row['user_id']}' class='btn btn-sm btn-warning'><i class='bi bi-pencil'></i></a>
                                     <a href='?delete={$row['user_id']}' class='btn btn-sm btn-danger' onclick=\"return confirm('Delete this staff?')\"><i class='bi bi-trash'></i></a>

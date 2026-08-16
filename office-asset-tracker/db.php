@@ -13,6 +13,12 @@
  *   3. Local defaults (localhost / postgres).
  */
 
+/** HTML-escape a value for safe output (guards against stored XSS). */
+function e($v)
+{
+    return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+}
+
 function oat_pg_dsn()
 {
     $url = getenv('DATABASE_URL') ?: getenv('POSTGRES_URL');
@@ -80,10 +86,21 @@ class OatConn
         $this->pdo = $pdo;
     }
 
-    public function query(string $sql)
+    /**
+     * Run a query. Pass $params to use a prepared statement with bound
+     * values (positional ? placeholders) — always prefer this for any value
+     * derived from user input. Returns an OatResult for row-returning
+     * statements, true for others, false on error.
+     */
+    public function query(string $sql, array $params = [])
     {
         try {
-            $stmt = $this->pdo->query($sql);
+            if ($params) {
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($params);
+            } else {
+                $stmt = $this->pdo->query($sql);
+            }
             if ($stmt->columnCount() > 0) {
                 return new OatResult($stmt->fetchAll(PDO::FETCH_ASSOC));
             }
