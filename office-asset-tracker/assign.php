@@ -1,6 +1,6 @@
 <?php
 session_start();
-if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){ header("Location: login.php"); exit(); }
+if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){ header("Location: /login.php"); exit(); }
 include "db.php";
 
 if(isset($_POST['assign_asset'])){
@@ -13,7 +13,7 @@ if(isset($_POST['assign_asset'])){
     if($conn->query($sql)){
         // update asset status
         $conn->query("UPDATE assets SET status='In Use' WHERE asset_id=$asset_id");
-        echo "<script>alert('Asset assigned successfully'); window.location='assign.php';</script>";
+        echo "<script>alert('Asset assigned successfully'); window.location='/assign.php';</script>";
     } else {
         echo "<script>alert('Error: ".$conn->error."');</script>";
     }
@@ -30,7 +30,7 @@ if(isset($_GET['return'])){
         $asset_id = $conn->query("SELECT asset_id FROM asset_assignments WHERE assignment_id=$id")->fetch_assoc()['asset_id'];
         $conn->query("UPDATE assets SET status='Available' WHERE asset_id=$asset_id");
 
-        echo "<script>alert('Asset marked as returned'); window.location='assign.php';</script>";
+        echo "<script>alert('Asset marked as returned'); window.location='/assign.php';</script>";
     }
 }
 ?>

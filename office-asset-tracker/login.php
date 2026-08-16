@@ -17,11 +17,11 @@ if(isset($_POST['login'])){
         $_SESSION['full_name'] = $user['full_name'];
 
         if($user['role'] == 'Admin'){
-            header("Location: index.php");
+            header("Location: /index.php");
         }elseif($user['role'] == 'Staff'){
-            header("Location: staff-dashboard.php");
+            header("Location: /staff-dashboard.php");
         } else {
-            header("Location: login.php");
+            header("Location: /login.php");
         }
         
         exit();
@@ -45,7 +45,7 @@ if(isset($_POST['login'])){
                 <div class="card-body">
                     <h3 class="text-center">Login</h3>
                     <?php if(isset($error)) echo "<p class='text-danger'>$error</p>"; ?>
-                    <form method="POST" action="">
+                    <form method="POST" action="/login.php">
                         <div class="mb-3">
                             <input type="text" name="username" class="form-control" placeholder="Username" required>
                         </div>

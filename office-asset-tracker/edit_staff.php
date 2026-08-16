@@ -1,7 +1,7 @@
 <?php
 session_start();
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){
-    header("Location: login.php");
+    header("Location: /login.php");
     exit();
 }
 include "db.php";
@@ -21,7 +21,7 @@ if(isset($_POST['update_staff'])){
                 department='$department'
             WHERE user_id=$id AND role='Staff'";
     $conn->query($sql);
-    header("Location: staff.php");
+    header("Location: /staff.php");
     exit();
 }
 ?>

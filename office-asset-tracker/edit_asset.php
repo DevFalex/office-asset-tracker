@@ -1,7 +1,7 @@
 <?php
 session_start();
 if(!isset($_SESSION['user_id'])){
-    header("Location: login.php");
+    header("Location: /login.php");
     exit();
 }
 include "db.php";
@@ -25,7 +25,7 @@ if(isset($_POST['update_asset'])){
                 status='$status'
             WHERE asset_id=$id";
     $conn->query($sql);
-    header("Location: assets.php");
+    header("Location: /assets.php");
     exit();
 }
 ?>

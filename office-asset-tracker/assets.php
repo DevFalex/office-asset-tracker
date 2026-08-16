@@ -1,6 +1,6 @@
 <?php
 session_start();
-if(!isset($_SESSION['user_id'])){ header("Location: login.php"); exit(); }
+if(!isset($_SESSION['user_id'])){ header("Location: /login.php"); exit(); }
 include "db.php";
 
 if(isset($_POST['add_asset'])){
@@ -13,7 +13,7 @@ if(isset($_POST['add_asset'])){
     $sql = "INSERT INTO assets (asset_name, asset_type, serial_number, purchase_date, status) 
             VALUES ('$name','$type','$serial','$purchase_date','$status')";
     if($conn->query($sql)){
-        echo "<script>alert('Asset added successfully'); window.location='assets.php';</script>";
+        echo "<script>alert('Asset added successfully'); window.location='/assets.php';</script>";
     } else {
         echo "<script>alert('Error: ".$conn->error."');</script>";
     }
@@ -23,7 +23,7 @@ if(isset($_POST['add_asset'])){
 if(isset($_GET['delete'])){
     $id = $_GET['delete'];
     $conn->query("DELETE FROM assets WHERE asset_id=$id");
-    echo "<script>alert('Asset deleted successfully'); window.location='assets.php';</script>";
+    echo "<script>alert('Asset deleted successfully'); window.location='/assets.php';</script>";
 }
 
 ?>
