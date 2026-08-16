@@ -1,120 +1,128 @@
 <?php
 session_start();
-if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){ header("Location: /login.php"); exit(); }
 include "db.php";
+require_admin();
 
-if(isset($_POST['assign_asset'])){
+if (isset($_POST['assign_asset'])) {
     $asset_id = $_POST['asset_id'];
     $ok = $conn->query(
         "INSERT INTO asset_assignments (asset_id, staff_id, assigned_date) VALUES (?, ?, ?)",
         [$asset_id, $_POST['staff_id'], $_POST['assigned_date']]
     );
-    if($ok){
-        // update asset status
-        $conn->query("UPDATE assets SET status='In Use' WHERE asset_id = ?", [$asset_id]);
-        echo "<script>alert('Asset assigned successfully'); window.location='/assign.php';</script>";
+    if ($ok) {
+        $conn->query("UPDATE assets SET status = 'In Use' WHERE asset_id = ?", [$asset_id]);
+        set_flash('success', 'Asset assigned successfully.');
     } else {
-        echo "<script>alert('Error assigning asset');</script>";
+        set_flash('danger', 'Could not assign asset.');
     }
+    header("Location: /assign.php");
+    exit();
 }
 
-// Return Asset
-if(isset($_GET['return'])){
+if (isset($_GET['return'])) {
     $id = $_GET['return'];
-    if($conn->query("UPDATE asset_assignments SET return_date = ? WHERE assignment_id = ?", [date("Y-m-d"), $id])){
-        // get asset ID and set status back to Available
+    if ($conn->query("UPDATE asset_assignments SET return_date = ? WHERE assignment_id = ?", [date("Y-m-d"), $id])) {
         $row = $conn->query("SELECT asset_id FROM asset_assignments WHERE assignment_id = ?", [$id])->fetch_assoc();
-        if($row){
-            $conn->query("UPDATE assets SET status='Available' WHERE asset_id = ?", [$row['asset_id']]);
+        if ($row) {
+            $conn->query("UPDATE assets SET status = 'Available' WHERE asset_id = ?", [$row['asset_id']]);
         }
-        echo "<script>alert('Asset marked as returned'); window.location='/assign.php';</script>";
+        set_flash('success', 'Asset marked as returned.');
     }
+    header("Location: /assign.php");
+    exit();
 }
+
+$available   = $conn->query("SELECT * FROM assets WHERE status = 'Available' ORDER BY asset_name");
+$staffList   = $conn->query("SELECT * FROM users WHERE role = 'Staff' ORDER BY full_name");
+$assignments = $conn->query(
+    "SELECT aa.assignment_id, a.asset_name, a.serial_number, u.full_name, u.department, aa.assigned_date, aa.return_date
+     FROM asset_assignments aa
+     JOIN assets a ON aa.asset_id = a.asset_id
+     JOIN users u ON aa.staff_id = u.user_id
+     ORDER BY aa.assignment_id DESC"
+);
+
+$page_title = "Assignments";
+$active = "assign";
+include "partials/header.php";
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Asset Assignment - Office Asset Tracker</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-
-<div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-arrow-left-right text-warning"></i> Asset Assignment</h2>
-        <a href="index.php" class="btn btn-secondary"><i class="bi bi-house"></i> Dashboard</a>
+<div class="page-head">
+    <div>
+        <h2>Asset Assignments</h2>
+        <p class="text-muted mb-0">Assign available assets to staff and record returns.</p>
     </div>
+</div>
 
-    <!-- Assign Asset Form -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-warning text-dark"><i class="bi bi-plus-circle"></i> Assign Asset</div>
-        <div class="card-body">
-            <form method="POST" class="row g-3">
-                <div class="col-md-4">
-                    <select name="asset_id" class="form-select" required>
-                        <option value="">Select Asset</option>
-                        <?php
-                        $assets = $conn->query("SELECT * FROM assets WHERE status='Available'");
-                        while($a = $assets->fetch_assoc()){
-                            echo "<option value='{$a['asset_id']}'>".e($a['asset_name'])." (".e($a['serial_number']).")</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <select name="staff_id" class="form-select" required>
-                        <option value="">Select Staff</option>
-                        <?php
-                        $staff = $conn->query("SELECT * FROM users WHERE role='Staff'");
-                        while($s = $staff->fetch_assoc()){
-                            echo "<option value='{$s['user_id']}'>".e($s['full_name'])." - ".e($s['department'])."</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-                <div class="col-md-2"><input type="date" name="assigned_date" value="<?php echo date('Y-m-d'); ?>" class="form-control"></div>
-                <div class="col-md-2"><button type="submit" name="assign_asset" class="btn btn-warning w-100"><i class="bi bi-save"></i> Assign</button></div>
-            </form>
-        </div>
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-arrow-left-right me-2"></i>Assign an Asset</div>
+    <div class="card-body">
+        <form method="POST" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Asset (available only)</label>
+                <select name="asset_id" class="form-select" required>
+                    <option value="">Select asset…</option>
+                    <?php while ($a = $available->fetch_assoc()): ?>
+                        <option value="<?php echo (int) $a['asset_id']; ?>"><?php echo e($a['asset_name']) . ' (' . e($a['serial_number']) . ')'; ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Staff Member</label>
+                <select name="staff_id" class="form-select" required>
+                    <option value="">Select staff…</option>
+                    <?php while ($s = $staffList->fetch_assoc()): ?>
+                        <option value="<?php echo (int) $s['user_id']; ?>"><?php echo e($s['full_name']) . ' — ' . e($s['department']); ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Date</label>
+                <input type="date" name="assigned_date" value="<?php echo date('Y-m-d'); ?>" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" name="assign_asset" class="btn btn-primary w-100"><i class="bi bi-check2 me-1"></i> Assign</button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <!-- Current Assignments -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-dark text-white"><i class="bi bi-list-task"></i> Current Assignments</div>
-        <div class="card-body table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-dark">
-                    <tr><th>ID</th><th>Asset</th><th>Staff</th><th>Assigned Date</th><th>Return Date</th><th>Action</th></tr>
-                </thead>
+<div class="card">
+    <div class="card-header"><i class="bi bi-list-task me-2"></i>Assignment Records</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr>
+                    <th class="ps-3">ID</th><th>Asset</th><th>Staff</th><th>Assigned</th><th>Returned</th><th class="pe-3 text-end">Action</th>
+                </tr></thead>
                 <tbody>
-                    <?php
-                    $sql = "SELECT aa.assignment_id, a.asset_name, a.serial_number, u.full_name, u.department, aa.assigned_date, aa.return_date
-                            FROM asset_assignments aa
-                            JOIN assets a ON aa.asset_id=a.asset_id
-                            JOIN users u ON aa.staff_id=u.user_id
-                            ORDER BY aa.assignment_id DESC";
-                    $result = $conn->query($sql);
-                    while($row = $result->fetch_assoc()){
-                        echo "<tr>
-                                <td>{$row['assignment_id']}</td>
-                                <td>".e($row['asset_name'])." (".e($row['serial_number']).")</td>
-                                <td>".e($row['full_name'])." - ".e($row['department'])."</td>
-                                <td>{$row['assigned_date']}</td>
-                                <td>".($row['return_date'] ? $row['return_date'] : "<span class='badge bg-danger'>Not Returned</span>")."</td>
-                                <td>";
-                        if(!$row['return_date']){
-                            echo "<a href='?return={$row['assignment_id']}' class='btn btn-sm btn-success'><i class='bi bi-check2-circle'></i> Mark Returned</a>";
-                        }
-                        echo "</td></tr>";
-                    }
-                    ?>
+                <?php while ($row = $assignments->fetch_assoc()): ?>
+                    <tr>
+                        <td class="ps-3 text-muted">#<?php echo (int) $row['assignment_id']; ?></td>
+                        <td class="fw-semibold"><?php echo e($row['asset_name']); ?><div class="small text-muted"><?php echo e($row['serial_number']); ?></div></td>
+                        <td><?php echo e($row['full_name']); ?><div class="small text-muted"><?php echo e($row['department']); ?></div></td>
+                        <td><?php echo e($row['assigned_date']); ?></td>
+                        <td>
+                            <?php if ($row['return_date']): ?>
+                                <?php echo e($row['return_date']); ?>
+                            <?php else: ?>
+                                <span class="badge bg-danger">Not returned</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="pe-3 text-end">
+                            <?php if (!$row['return_date']): ?>
+                                <a href="?return=<?php echo (int) $row['assignment_id']; ?>" class="btn btn-sm btn-success"
+                                   onclick="return confirm('Mark this asset as returned?')"><i class="bi bi-check2-circle me-1"></i> Mark Returned</a>
+                            <?php else: ?>
+                                <span class="badge bg-secondary">Closed</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-<footer class="text-center text-muted py-3 mt-4"><small>Built by DevFalex.</small></footer>
-</body>
-</html>
+
+<?php include "partials/footer.php"; ?>

@@ -1,85 +1,104 @@
 <?php
 session_start();
-if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){ header("Location: /login.php"); exit(); }
 include "db.php";
+require_admin();
 
-if(isset($_POST['add_staff'])){
+if (isset($_POST['add_staff'])) {
     $ok = $conn->query(
         "INSERT INTO users (full_name, username, password, department, role) VALUES (?, ?, ?, ?, 'Staff')",
         [$_POST['full_name'], $_POST['username'],
          password_hash($_POST['password'], PASSWORD_DEFAULT), $_POST['department']]
     );
-    if($ok){
-        echo "<script>alert('Staff added successfully'); window.location='/staff.php';</script>";
-    } else {
-        echo "<script>alert('Error adding staff. The username may already exist.');</script>";
-    }
+    set_flash($ok ? 'success' : 'danger',
+        $ok ? 'Staff member added.' : 'Could not add staff — the username may already exist.');
+    header("Location: /staff.php");
+    exit();
 }
 
-if(isset($_GET['delete'])){
+if (isset($_GET['delete'])) {
     $conn->query("DELETE FROM users WHERE user_id = ? AND role = 'Staff'", [$_GET['delete']]);
-    echo "<script>alert('Staff deleted successfully'); window.location='/staff.php';</script>";
+    set_flash('success', 'Staff member removed.');
+    header("Location: /staff.php");
+    exit();
 }
+
+$staff = $conn->query("SELECT * FROM users WHERE role = 'Staff' ORDER BY user_id DESC");
+
+$page_title = "Staff";
+$active = "staff";
+include "partials/header.php";
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Staff Management - Office Asset Tracker</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-
-<div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-people text-success"></i> Staff Management</h2>
-        <a href="index.php" class="btn btn-secondary"><i class="bi bi-house"></i> Dashboard</a>
+<div class="page-head">
+    <div>
+        <h2>Staff Management</h2>
+        <p class="text-muted mb-0">Manage staff accounts who can be assigned assets.</p>
     </div>
+    <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#addStaff">
+        <i class="bi bi-person-plus me-1"></i> Add Staff
+    </button>
+</div>
 
-    <!-- Add Staff -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-success text-white"><i class="bi bi-plus-circle"></i> Add New Staff</div>
+<div class="collapse show mb-4" id="addStaff">
+    <div class="card">
+        <div class="card-header"><i class="bi bi-person-plus me-2"></i>New Staff Member</div>
         <div class="card-body">
             <form method="POST" class="row g-3">
-                <div class="col-md-3"><input type="text" name="full_name" class="form-control" placeholder="Full Name" required></div>
-                <div class="col-md-3"><input type="text" name="username" class="form-control" placeholder="Username" required></div>
-                <div class="col-md-3"><input type="password" name="password" class="form-control" placeholder="Password" required></div>
-                <div class="col-md-3"><input type="text" name="department" class="form-control" placeholder="Department"></div>
-                <div class="col-md-12"><button type="submit" name="add_staff" class="btn btn-success w-100"><i class="bi bi-save"></i> Save</button></div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Full Name</label>
+                    <input type="text" name="full_name" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Username</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Department</label>
+                    <input type="text" name="department" class="form-control">
+                </div>
+                <div class="col-12">
+                    <button type="submit" name="add_staff" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save Staff</button>
+                </div>
             </form>
         </div>
     </div>
+</div>
 
-    <!-- Staff List -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-dark text-white"><i class="bi bi-list-ul"></i> Staff List</div>
-        <div class="card-body table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-dark">
-                    <tr><th>ID</th><th>Full Name</th><th>Username</th><th>Department</th><th>Actions</th></tr>
-                </thead>
+<div class="card">
+    <div class="card-header"><i class="bi bi-people me-2"></i>Staff Directory</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr>
+                    <th class="ps-3">ID</th><th>Full Name</th><th>Username</th><th>Department</th><th class="pe-3 text-end">Actions</th>
+                </tr></thead>
                 <tbody>
-                    <?php
-                    $result = $conn->query("SELECT * FROM users WHERE role='Staff'");
-                    while($row = $result->fetch_assoc()){
-                        echo "<tr>
-                                <td>{$row['user_id']}</td>
-                                <td>".e($row['full_name'])."</td>
-                                <td>".e($row['username'])."</td>
-                                <td><span class='badge bg-info text-dark'>".e($row['department'])."</span></td>
-                                <td>
-                                    <a href='edit_staff.php?id={$row['user_id']}' class='btn btn-sm btn-warning'><i class='bi bi-pencil'></i></a>
-                                    <a href='?delete={$row['user_id']}' class='btn btn-sm btn-danger' onclick=\"return confirm('Delete this staff?')\"><i class='bi bi-trash'></i></a>
-                                </td>
-                              </tr>";
-                    }
-                    ?>
+                <?php while ($row = $staff->fetch_assoc()): ?>
+                    <tr>
+                        <td class="ps-3 text-muted">#<?php echo (int) $row['user_id']; ?></td>
+                        <td class="fw-semibold">
+                            <span class="avatar d-inline-flex me-2" style="width:32px;height:32px;font-size:.8rem;background:var(--brand-dark);color:#fff;border-radius:50%;align-items:center;justify-content:center;">
+                                <?php echo e(strtoupper(substr($row['full_name'], 0, 1))); ?>
+                            </span>
+                            <?php echo e($row['full_name']); ?>
+                        </td>
+                        <td><?php echo e($row['username']); ?></td>
+                        <td><span class="badge bg-info text-dark"><?php echo e($row['department']); ?></span></td>
+                        <td class="pe-3 text-end">
+                            <a href="/edit_staff.php?id=<?php echo (int) $row['user_id']; ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                            <a href="?delete=<?php echo (int) $row['user_id']; ?>" class="btn btn-sm btn-outline-danger"
+                               onclick="return confirm('Delete this staff member?')"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-<footer class="text-center text-muted py-3 mt-4"><small>Built by DevFalex.</small></footer>
-</body>
-</html>
+
+<?php include "partials/footer.php"; ?>

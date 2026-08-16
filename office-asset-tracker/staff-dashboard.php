@@ -1,89 +1,62 @@
 <?php
 session_start();
-if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Staff'){
-    header("Location: /login.php");
+include "db.php";
+require_login();
+if (($_SESSION['role'] ?? '') !== 'Staff') {
+    header("Location: /index.php");
     exit();
 }
-include "db.php";
+
 $staff_id = $_SESSION['user_id'];
+$assets = $conn->query(
+    "SELECT a.asset_name, a.serial_number, aa.assigned_date, a.status
+     FROM asset_assignments aa
+     JOIN assets a ON aa.asset_id = a.asset_id
+     WHERE aa.staff_id = ? AND aa.return_date IS NULL
+     ORDER BY aa.assigned_date DESC",
+    [$staff_id]
+);
+$count = $assets ? $assets->num_rows : 0;
+
+$page_title = "My Assets";
+$active = "dashboard";
+include "partials/header.php";
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>My Dashboard - Office Asset Tracker</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="#">Office Asset Tracker</a>
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-            <span class="nav-link text-white">
-                Welcome, <?php echo e($_SESSION['full_name']); ?> (Staff)
-            </span>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
-        </li>
-      </ul>
+<div class="page-head">
+    <div>
+        <h2>My Assigned Assets</h2>
+        <p class="text-muted mb-0">Equipment currently issued to you.</p>
     </div>
-  </div>
-</nav>
+    <span class="badge bg-primary fs-6"><?php echo (int) $count; ?> item<?php echo $count == 1 ? '' : 's'; ?></span>
+</div>
 
-<div class="container my-5">
-    <h2 class="mb-4 text-center"><i class="bi bi-laptop"></i> My Assigned Assets</h2>
-
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <i class="bi bi-list-check"></i> Current Assignments
-        </div>
-        <div class="card-body table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Asset</th>
-                        <th>Serial Number</th>
-                        <th>Assigned Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
+<div class="card">
+    <div class="card-header"><i class="bi bi-list-check me-2"></i>Current Assignments</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr><th class="ps-3">Asset</th><th>Serial Number</th><th>Assigned Date</th><th class="pe-3">Status</th></tr></thead>
                 <tbody>
-                    <?php
-                    $sql = "SELECT a.asset_name, a.serial_number, aa.assigned_date, a.status
-                            FROM asset_assignments aa
-                            JOIN assets a ON aa.asset_id=a.asset_id
-                            WHERE aa.staff_id = ? AND aa.return_date IS NULL";
-                    $result = $conn->query($sql, [$staff_id]);
-                    if($result->num_rows > 0){
-                        while($row = $result->fetch_assoc()){
-                            echo "<tr>
-                                    <td>".e($row['asset_name'])."</td>
-                                    <td>".e($row['serial_number'])."</td>
-                                    <td>{$row['assigned_date']}</td>
-                                    <td><span class='badge bg-".
-                                        ($row['status']=="Available" ? "success" : 
-                                        ($row['status']=="In Use" ? "primary" : 
-                                        ($row['status']=="Under Repair" ? "warning text-dark" : "danger")))."'>
-                                        {$row['status']}
-                                    </span></td>
-                                  </tr>";
-                        }
-                    } else {
-                        echo "<tr><td colspan='4' class='text-center text-muted'>No assets assigned yet.</td></tr>";
-                    }
-                    ?>
+                <?php if ($count > 0): ?>
+                    <?php while ($row = $assets->fetch_assoc()): ?>
+                        <tr>
+                            <td class="ps-3 fw-semibold"><?php echo e($row['asset_name']); ?></td>
+                            <td><code><?php echo e($row['serial_number']); ?></code></td>
+                            <td><?php echo e($row['assigned_date']); ?></td>
+                            <td class="pe-3"><span class="badge <?php echo status_class($row['status']); ?>"><?php echo e($row['status']); ?></span></td>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr><td colspan="4" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox d-block mb-2" style="font-size:2rem;"></i>
+                        No assets assigned to you yet.
+                    </td></tr>
+                <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<footer class="text-center text-muted py-3 mt-4"><small>Built by DevFalex.</small></footer>
-</body>
-</html>
+<?php include "partials/footer.php"; ?>
