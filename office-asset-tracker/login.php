@@ -57,7 +57,7 @@ if(isset($_POST['login'])){
                 </div>
             </div>
             <div class="text-center mt-3">
-                <p>Developed By Ope Faleye (249074041)</p>
+                <p>Developed By Ope Faleye</p>
                 <p>Admin Username:<strong> admin</strong></p>
                 <p>Admin Password:<strong> mit_admin123</strong></p>
             </div>
@@ -65,5 +65,6 @@ if(isset($_POST['login'])){
         <p class="text-center mt-3"><strong>Note: You can register as a staff and login using your preferred password</strong></p>
     </div>
 </div>
+<footer class="text-center text-muted py-3 mt-4"><small>Built by DevFalex.</small></footer>
 </body>
 </html>

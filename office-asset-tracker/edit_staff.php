@@ -50,5 +50,6 @@ if(isset($_POST['update_staff'])){
         </div>
     </form>
 </div>
+<footer class="text-center text-muted py-3 mt-4"><small>Built by DevFalex.</small></footer>
 </body>
 </html>
