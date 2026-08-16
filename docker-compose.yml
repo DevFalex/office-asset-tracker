@@ -1,4 +1,4 @@
-# Run the full stack (PHP app + MySQL) locally or on any Docker host:
+# Run the full stack (PHP app + PostgreSQL) locally or on any Docker host:
 #   docker compose up --build
 # then open http://localhost:8080
 services:
@@ -7,24 +7,26 @@ services:
     ports:
       - "8080:80"
     environment:
-      MYSQLHOST: db
-      MYSQLPORT: "3306"
-      MYSQLUSER: root
-      MYSQLPASSWORD: rootpass
-      MYSQLDATABASE: office_asset_tracker
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: office_asset_tracker
+      PGSSLMODE: disable
     depends_on:
       db:
         condition: service_healthy
 
   db:
-    image: mysql:8.0
+    image: postgres:16
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: office_asset_tracker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: office_asset_tracker
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpass"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 20

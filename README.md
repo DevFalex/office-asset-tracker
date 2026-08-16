@@ -9,30 +9,33 @@ It supports two roles: **Admin** and **Staff**, each with specific permissions.
 - **Database**: MySQL 5.7+  
 - **Browser**: Chrome / Edge / Firefox  
 
-## ☁️ Deploy Online (Railway)
-The app is container-ready and reads its database settings from environment variables, so it can be hosted on [Railway](https://railway.app) with a managed MySQL — no code changes needed.
+## ☁️ Deploy Online (Render + Neon)
+The app is container-ready and uses **PostgreSQL** (via a small PDO layer), so it can be hosted for free on [Render](https://render.com) with a [Neon](https://neon.tech) database. Database settings come from a single `DATABASE_URL` environment variable — no code changes needed.
 
-**Steps:**
-1. Push this repository to GitHub (already done for this project).
-2. In Railway: **New Project → Deploy from GitHub repo** and pick this repo. Railway detects the `Dockerfile` and builds the PHP app.
-3. In the same project: **New → Database → Add MySQL**. Railway provisions a managed MySQL instance.
-4. Open the **app service → Variables** and add a reference to the database. The simplest option is a single variable:
-   - `MYSQL_URL` = `${{MySQL.MYSQL_URL}}`
+**1. Create the database (Neon):**
+1. Sign up at [neon.tech](https://neon.tech) and create a project.
+2. Copy the project's **connection string** (looks like `postgresql://user:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require`).
 
-   (Alternatively add the discrete vars `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, each referencing `${{MySQL.<same name>}}`.)
-5. On the app service, open **Settings → Networking → Generate Domain** to get a public URL.
-6. Visit the URL. On first load the app auto-creates its tables and sample data (from `office-asset-tracker/schema.sql`), then shows the login page.
+**2. Deploy the app (Render):**
+1. Push this repo to GitHub (already done for this project).
+2. In Render: **New → Web Service → Build and deploy from a Git repository**, pick this repo.
+3. Render reads `render.yaml` / the `Dockerfile` and builds the PHP image (Runtime: **Docker**).
+4. Under **Environment**, add a variable:
+   - `DATABASE_URL` = *your Neon connection string*
+5. Create the service. On first request the app auto-creates its tables and sample data (from `office-asset-tracker/schema.sql`), then shows the login page at the Render URL.
 
-The database connection is defined in `office-asset-tracker/db.php`, which resolves config from `MYSQL_URL`/`DATABASE_URL`, then Railway's `MYSQL*` / generic `DB_*` variables, and finally falls back to local `localhost`/`root` defaults for XAMPP.
+The database connection lives in `office-asset-tracker/db.php`, which resolves config from `DATABASE_URL`, then discrete `PG*` variables, and finally local defaults. Render injects `$PORT`, which the container's entrypoint binds Apache to.
 
 ### Run the full stack locally with Docker
 ```bash
 docker compose up --build
 # then open http://localhost:8080
 ```
-This starts the PHP app and a MySQL container together; the schema and sample data load automatically on first run.
+This starts the PHP app and a PostgreSQL container together; the schema and sample data load automatically on first run.
 
-## 🚀 Installation & Setup (Local XAMPP/LAMP)
+## 🚀 Installation & Setup (Local, original MySQL version)
+> Note: the online build above uses PostgreSQL. The steps below describe the original XAMPP/MySQL setup; `office_asset_tracker.sql` is the MySQL dump.
+
 1. Copy the project folder (`office_asset_tracker`) into your server’s **htdocs** (XAMPP) or **www** directory.  
 2. Import the SQL script: `office_asset_tracker.sql` into **phpMyAdmin**.  
    - This will create required tables and insert sample data (Admin, Staff, Assets).  

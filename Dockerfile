@@ -1,8 +1,11 @@
-# Office Asset Tracker — PHP + Apache image for Railway (and any Docker host).
+# Office Asset Tracker — PHP + Apache image for Render (and any Docker host).
 FROM php:8.2-apache
 
-# MySQL driver used by the app (mysqli).
-RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
+# PostgreSQL driver used by the app (PDO pgsql) for Neon.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Apache: allow .htaccess overrides and enable URL rewriting (harmless default).
 RUN a2enmod rewrite
