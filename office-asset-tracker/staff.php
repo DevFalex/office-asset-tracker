@@ -1,6 +1,6 @@
 <?php
 session_start();
-if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){ header("Location: login.php"); exit(); }
+if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'Admin'){ header("Location: /login.php"); exit(); }
 include "db.php";
 
 if(isset($_POST['add_staff'])){
@@ -12,7 +12,7 @@ if(isset($_POST['add_staff'])){
     $sql = "INSERT INTO users (full_name, username, password, department, role) 
             VALUES ('$full_name', '$username', '$password', '$department', 'Staff')";
     if($conn->query($sql)){
-        echo "<script>alert('Staff added successfully'); window.location='staff.php';</script>";
+        echo "<script>alert('Staff added successfully'); window.location='/staff.php';</script>";
     } else {
         echo "<script>alert('Error: ".$conn->error."');</script>";
     }
@@ -21,7 +21,7 @@ if(isset($_POST['add_staff'])){
 if(isset($_GET['delete'])){
     $id = $_GET['delete'];
     $conn->query("DELETE FROM users WHERE user_id=$id");
-    echo "<script>alert('Staff deleted successfully'); window.location='staff.php';</script>";
+    echo "<script>alert('Staff deleted successfully'); window.location='/staff.php';</script>";
 }
 ?>
 
